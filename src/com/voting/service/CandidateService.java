@@ -7,54 +7,105 @@ import java.util.Map;
 
 import com.voting.model.Candidate;
 import com.voting.repository.CandidateRepository;
+import com.voting.util.InputValidator;
 
 public class CandidateService {
 
-    private final CandidateRepository repository =
-            new CandidateRepository();
+    private final CandidateRepository repository;
+    private final Map<Integer, Candidate> candidates;
 
-    private final Map<Integer, Candidate> candidateMap =
-            new HashMap<>();
+    public CandidateService() {
+        repository = new CandidateRepository();
+        candidates = new HashMap<>();
 
-    public boolean registerCandidate(String name) {
+        loadExistingCandidates();
+    }
 
-        if (name == null || name.trim().isEmpty()) {
+    // Load candidates from MySQL at startup
+    private void loadExistingCandidates() {
+        try {
+            candidates.putAll(repository.getAllCandidates());
+
+            System.out.println(
+                    "Loaded " + candidates.size()
+                            + " existing candidates.");
+
+        } catch (SQLException e) {
+            System.out.println(
+                    "Error loading candidates: " + e.getMessage());
+        }
+    }
+
+    // Register a new candidate
+    public void registerCandidate(String candidateName) {
+
+        if (!InputValidator.isValidName(candidateName)) {
             System.out.println("Candidate name cannot be empty.");
-            return false;
+            return;
         }
 
-        Candidate candidate = new Candidate(0, name.trim());
+        candidateName = candidateName.trim();
+
+        // Check for duplicate candidate names
+        for (Candidate candidate : candidates.values()) {
+            if (candidate.getCandidateName()
+                    .equalsIgnoreCase(candidateName)) {
+
+                System.out.println("Candidate already exists.");
+                return;
+            }
+        }
+
+        Candidate candidate = new Candidate(0, candidateName);
 
         try {
-            int generatedId = repository.saveCandidate(candidate);
+            int candidateId = repository.saveCandidate(candidate);
 
-            if (generatedId > 0) {
+            if (candidateId > 0) {
                 Candidate savedCandidate =
-                        new Candidate(generatedId, name.trim());
+                        new Candidate(candidateId, candidateName);
 
-                candidateMap.put(generatedId, savedCandidate);
+                candidates.put(candidateId, savedCandidate);
 
                 System.out.println(
                         "Candidate registered successfully!");
-                System.out.println(savedCandidate);
+                System.out.println(
+                        "Candidate ID: " + candidateId);
 
-                return true;
+            } else {
+                System.out.println(
+                        "Candidate registration failed.");
             }
 
         } catch (SQLException e) {
-            if ("23000".equals(e.getSQLState())) {
-                System.out.println(
-                        "This candidate name already exists.");
-            } else {
-                System.out.println(
-                        "Database error: " + e.getMessage());
-            }
+            System.out.println(
+                    "Database error while registering candidate: "
+                            + e.getMessage());
         }
-
-        return false;
     }
 
+    // Find candidate by ID
     public Candidate findCandidate(int candidateId) {
-        return candidateMap.get(candidateId);
+        return candidates.get(candidateId);
+    }
+
+    // Display all registered candidates
+    public void displayAllCandidates() {
+
+        if (candidates.isEmpty()) {
+            System.out.println("No candidates registered.");
+            return;
+        }
+
+        System.out.println("\n----- REGISTERED CANDIDATES -----");
+
+        for (Candidate candidate : candidates.values()) {
+            System.out.println(candidate);
+        }
+    }
+
+    // Return the number of registered candidates
+    public int getCandidateCount() {
+        return candidates.size();
     }
 }

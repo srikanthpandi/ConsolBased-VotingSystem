@@ -1,15 +1,13 @@
 
 package com.voting;
 
-import java.util.List;
 import java.util.Scanner;
 
-import com.voting.model.Voter;
 import com.voting.service.CandidateService;
+import com.voting.service.ElectionService;
 import com.voting.service.ResultService;
 import com.voting.service.VoterService;
 import com.voting.service.VotingService;
-import com.voting.dsa.ResultSorter.CandidateResult;
 
 public class Main {
 
@@ -21,19 +19,22 @@ public class Main {
         CandidateService candidateService = new CandidateService();
         VotingService votingService = new VotingService();
         ResultService resultService = new ResultService();
+        ElectionService electionService = new ElectionService();
 
         final int ELECTION_ID = 1;
-        int choice=0;
+        int choice = 0;
 
         do {
             System.out.println("\n==================================");
-            System.out.println("       VOTING SYSTEM");
+            System.out.println("          VOTING SYSTEM");
             System.out.println("==================================");
             System.out.println("1. Register Voter");
             System.out.println("2. Register Candidate");
             System.out.println("3. Cast Vote");
             System.out.println("4. View Election Results");
-            System.out.println("5. Exit");
+            System.out.println("5. Close Election");
+            System.out.println("6. Open Election");
+            System.out.println("7. Exit");
             System.out.println("==================================");
             System.out.print("Enter your choice: ");
 
@@ -50,11 +51,13 @@ public class Main {
 
                 case 1:
                     System.out.print("Enter Voter ID: ");
+
                     if (!sc.hasNextInt()) {
                         System.out.println("Invalid voter ID.");
                         sc.nextLine();
                         break;
                     }
+
                     int voterId = sc.nextInt();
                     sc.nextLine();
 
@@ -73,19 +76,23 @@ public class Main {
 
                 case 3:
                     System.out.print("Enter Voter ID: ");
+
                     if (!sc.hasNextInt()) {
                         System.out.println("Invalid voter ID.");
                         sc.nextLine();
                         break;
                     }
+
                     int votingVoterId = sc.nextInt();
 
                     System.out.print("Enter Candidate ID: ");
+
                     if (!sc.hasNextInt()) {
                         System.out.println("Invalid candidate ID.");
                         sc.nextLine();
                         break;
                     }
+
                     int candidateId = sc.nextInt();
                     sc.nextLine();
 
@@ -94,27 +101,29 @@ public class Main {
                     break;
 
                 case 4:
-                    System.out.print("Enter Election ID (1): ");
-                    if (!sc.hasNextInt()) {
-                        System.out.println("Invalid election ID.");
-                        sc.nextLine();
-                        break;
-                    }
-                    int electionId = sc.nextInt();
-                    sc.nextLine();
-
-                    resultService.displayResults(electionId);
+                    resultService.displayResults(ELECTION_ID);
                     break;
 
                 case 5:
-                    System.out.println("Thank you for using the Voting System!");
+                    electionService.updateElectionStatus(
+                            ELECTION_ID, "CLOSED");
+                    break;
+
+                case 6:
+                    electionService.updateElectionStatus(
+                            ELECTION_ID, "OPEN");
+                    break;
+
+                case 7:
+                    System.out.println(
+                            "Thank you for using the Voting System!");
                     break;
 
                 default:
-                    System.out.println("Invalid choice. Select 1 to 5.");
+                    System.out.println("Invalid choice. Select 1 to 7.");
             }
 
-        } while (choice != 5);
+        } while (choice != 7);
 
         sc.close();
     }
